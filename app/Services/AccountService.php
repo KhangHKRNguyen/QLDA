@@ -5,12 +5,14 @@ namespace App\Services;
 use App\Models\Account;
 use App\Models\ActivityLog;
 use App\Models\Notification;
+use App\Models\Person;
 use DomainException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Nghiệp vụ quản lý tài khoản, bám theo các biểu đồ tuần tự:
- * XemXetTaiKhoan, KhoaTaiKhoan (kèm Scheduler tự mở khóa), XoaTaiKhoan.
+ * Nghiệp vụ quản lý tài khoản của vai trò Quản lý (Chương 2: Thêm/xóa/Khóa/Mở khóa),
+ * bám theo biểu đồ KhoaTaiKhoan (kèm Scheduler tự mở khóa) và XoaTaiKhoan.
  *
  * Mỗi thao tác: cập nhật accounts → gửi notifications cho chủ tài khoản → ghi activity_logs.
  * Vi phạm điều kiện nghiệp vụ thì ném DomainException (controller hiển thị thành toast lỗi).
@@ -23,13 +25,30 @@ class AccountService
     public const MIN_LOCK_DAYS = 7;
     public const MAX_LOCK_DAYS = 30;
 
-    /** Xem xét: không vi phạm → chỉ ghi nhận kết quả */
-    public function markReviewed(Account $account, ?string $note, ?int $actorId): void
+    /** Thêm tài khoản: tạo people + accounts (trạng thái Hoạt động) */
+    public function create(array $data, ?int $actorId): Account
     {
-        $this->log($account, 'Xem xét: không vi phạm' . ($note ? " – {$note}" : ''), $actorId);
+        return DB::transaction(function () use ($data, $actorId) {
+            $person = Person::create(Arr::only($data, [
+                'full_name', 'phone_number', 'email', 'date_of_birth', 'gender', 'address', 'district',
+            ]));
+
+            $account = Account::create([
+                'username'          => $data['username'],
+                'password'          => $data['password'], // model tự hash (cast 'hashed')
+                'role_id'           => $data['role_id'],
+                'person_id'         => $person->person_id,
+                'status'            => 'active',
+                'status_updated_at' => now(),
+            ]);
+
+            $this->log($account, 'Tạo tài khoản', $actorId);
+
+            return $account;
+        });
     }
 
-    /** Vi phạm nhẹ → tạm khóa 7–30 ngày */
+    /** Tạm khóa 7–30 ngày (vi phạm nhẹ) */
     public function lock(Account $account, string $reason, int $days, ?int $actorId): void
     {
         if ($account->status !== 'active') {

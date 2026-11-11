@@ -7,6 +7,9 @@
 @section('breadcrumb')
     <a href="{{ url('/admin') }}">Tổng quan</a> / <span class="font-medium text-foreground">Tài khoản</span>
 @endsection
+@section('actions')
+    <a href="{{ route('admin.accounts.create') }}" class="btn btn-primary">+ Thêm tài khoản</a>
+@endsection
 
 @section('content')
 @php
@@ -37,10 +40,15 @@
         {{-- ===== Bộ lọc ===== --}}
         <form method="GET" action="{{ route('admin.accounts.index') }}"
               class="grid gap-3 border-b p-4 md:grid-cols-[1fr_13rem_13rem_auto]">
+            {{-- Giữ cách sắp xếp hiện tại khi tìm kiếm / lọc --}}
+            @if (request()->has('sort'))
+                <input type="hidden" name="sort" value="{{ $sort }}">
+                <input type="hidden" name="dir" value="{{ $dir }}">
+            @endif
             <div class="relative">
                 <x-icon name="search" class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground" />
                 <input type="search" name="q" value="{{ request('q') }}" class="input pl-9"
-                       placeholder="Tìm theo họ tên, tên đăng nhập, email, SĐT..." aria-label="Tìm kiếm tài khoản">
+                       placeholder="Tìm theo mã (VD: 12), họ tên, tên đăng nhập, email, SĐT..." aria-label="Tìm kiếm tài khoản">
             </div>
             <select name="role" class="input" aria-label="Lọc theo vai trò" onchange="this.form.submit()">
                 <option value="">Tất cả vai trò</option>
@@ -67,17 +75,32 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Tài khoản</th>
-                        <th>Liên hệ</th>
-                        <th>Vai trò</th>
-                        <th>Trạng thái</th>
-                        <th>Cập nhật</th>
+                        {{-- Bấm tiêu đề để sắp xếp; bấm lại để đảo chiều --}}
+                        @foreach (['ma' => 'Mã', 'ten' => 'Tài khoản', 'lien-he' => 'Liên hệ', 'vai-tro' => 'Vai trò', 'trang-thai' => 'Trạng thái', 'cap-nhat' => 'Cập nhật'] as $key => $title)
+                            @php
+                                $active = $sort === $key;
+                                $next   = $active && $dir === 'asc' ? 'desc' : 'asc';
+                            @endphp
+                            <th aria-sort="{{ $active ? ($dir === 'asc' ? 'ascending' : 'descending') : 'none' }}">
+                                <a href="{{ request()->fullUrlWithQuery(['sort' => $key, 'dir' => $next, 'page' => null]) }}"
+                                   @class(['group inline-flex items-center gap-1 whitespace-nowrap hover:text-foreground', 'text-foreground' => $active])
+                                   title="Sắp xếp theo {{ mb_strtolower($title) }}">
+                                    {{ $title }}
+                                    @if ($active)
+                                        <x-icon :name="$dir === 'asc' ? 'arrow-up' : 'arrow-down'" class="size-3.5 text-primary" />
+                                    @else
+                                        <x-icon name="sort" class="size-3.5 opacity-40 group-hover:opacity-100" />
+                                    @endif
+                                </a>
+                            </th>
+                        @endforeach
                         <th class="text-right">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($accounts as $a)
                         <tr>
+                            <td class="font-medium whitespace-nowrap text-muted-foreground">#{{ $a->account_id }}</td>
                             <td>
                                 <a href="{{ route('admin.accounts.show', $a->account_id) }}" class="group flex items-center gap-3">
                                     <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">{{ $a->initial }}</span>
@@ -127,7 +150,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-12 text-center text-muted-foreground">
+                            <td colspan="7" class="py-12 text-center text-muted-foreground">
                                 Không tìm thấy tài khoản phù hợp.
                                 <a href="{{ route('admin.accounts.index') }}" class="font-medium text-primary hover:underline">Xóa bộ lọc</a>
                             </td>

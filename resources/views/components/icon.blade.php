@@ -18,6 +18,9 @@
         'check'  => '<path d="M20 6 9 17l-5-5"/>',
         'clock'  => '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
         'back'   => '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+        'arrow-up'   => '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
+        'arrow-down' => '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+        'sort'       => '<path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>',
     ];
 @endphp
 <svg {{ $attributes->merge(['class' => 'size-4 shrink-0']) }} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{!! $paths[$name] ?? '' !!}</svg>

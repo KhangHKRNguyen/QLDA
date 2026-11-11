@@ -1,8 +1,7 @@
-{{-- Chi tiết tài khoản — xem xét / tạm khóa / đình chỉ / vô hiệu hóa --}}
+{{-- Chi tiết tài khoản — tạm khóa / đình chỉ / mở khóa / vô hiệu hóa (xóa) --}}
 @php
     $id         = $account->account_id;
     $label      = $account->statusLabel();
-    $canReview  = $account->status === 'active';
     $canLock    = $account->status === 'active';
     $canSuspend = in_array($account->status, ['active', 'locked'], true);
     $canDelete  = in_array($account->status, ['active', 'locked'], true);
@@ -18,7 +17,7 @@
 
 @section('title', $account->full_name . ' – Tài khoản')
 @section('heading', $account->full_name)
-@section('description', 'Thông tin hồ sơ và lịch sử hoạt động để xem xét tài khoản.')
+@section('description', 'Mã tài khoản #' . $account->account_id . ' · Thông tin hồ sơ và lịch sử hoạt động.')
 @section('breadcrumb')
     <a href="{{ url('/admin') }}">Tổng quan</a> /
     <a href="{{ route('admin.accounts.index') }}">Tài khoản</a> /
@@ -26,6 +25,24 @@
 @endsection
 @section('actions')
     <a href="{{ route('admin.accounts.index') }}" class="btn btn-outline"><x-icon name="back" /> Danh sách</a>
+    @if ($canLock)
+        <button type="button" class="btn btn-secondary"
+            data-lock-action="{{ route('admin.accounts.lock', $id) }}"
+            data-lock-name="{{ $account->full_name }}">
+            <x-icon name="lock" /> Tạm khóa
+        </button>
+    @endif
+    @if ($canSuspend)
+        <button type="button" class="btn btn-danger"
+            data-confirm data-confirm-tone="danger"
+            data-confirm-title="Đình chỉ vĩnh viễn"
+            data-confirm-message="Tài khoản {{ $account->full_name }} sẽ bị khóa vĩnh viễn và KHÔNG THỂ khôi phục."
+            data-confirm-action="{{ route('admin.accounts.suspend', $id) }}"
+            data-confirm-reason="Lý do đình chỉ"
+            data-confirm-label="Đình chỉ">
+            <x-icon name="ban" /> Đình chỉ
+        </button>
+    @endif
 @endsection
 
 @section('content')
@@ -98,55 +115,6 @@
         </aside>
 
         <div class="space-y-6 lg:col-span-2">
-
-            {{-- ===== Xem xét tài khoản (3 kết quả theo biểu đồ XemXetTaiKhoan) ===== --}}
-            @if ($canSuspend)
-                <section class="card">
-                    <header class="card-header">
-                        <div>
-                            <h2 class="card-title">Xem xét tài khoản</h2>
-                            <p class="card-desc">Dựa trên hồ sơ và lịch sử hoạt động, chọn kết quả xử lý phù hợp.</p>
-                        </div>
-                    </header>
-                    <div class="card-body grid gap-3 sm:grid-cols-3">
-                        <div class="flex flex-col rounded-lg border p-4">
-                            <span class="flex size-9 items-center justify-center rounded-full bg-success-soft text-success"><x-icon name="check" class="size-5" /></span>
-                            <p class="mt-3 font-semibold">Không vi phạm</p>
-                            <p class="mt-1 flex-1 text-xs text-muted-foreground">Ghi nhận kết quả, tài khoản tiếp tục hoạt động bình thường.</p>
-                            <button type="button" class="btn btn-outline btn-sm mt-4" @disabled(! $canReview)
-                                data-confirm
-                                data-confirm-title="Xác nhận không vi phạm"
-                                data-confirm-message="Ghi nhận kết quả xem xét: tài khoản {{ $account->full_name }} không vi phạm."
-                                data-confirm-action="{{ route('admin.accounts.review', $id) }}"
-                                data-confirm-reason="Ghi chú (không bắt buộc)"
-                                data-confirm-reason-required="false"
-                                data-confirm-label="Ghi nhận">Ghi nhận</button>
-                        </div>
-
-                        <div class="flex flex-col rounded-lg border p-4">
-                            <span class="flex size-9 items-center justify-center rounded-full bg-warning-soft text-warning"><x-icon name="lock" class="size-5" /></span>
-                            <p class="mt-3 font-semibold">Vi phạm nhẹ</p>
-                            <p class="mt-1 flex-1 text-xs text-muted-foreground">Tạm khóa 7–30 ngày, tự động mở khóa khi hết thời hạn.</p>
-                            <button type="button" class="btn btn-outline btn-sm mt-4" @disabled(! $canLock)
-                                data-lock-action="{{ route('admin.accounts.lock', $id) }}"
-                                data-lock-name="{{ $account->full_name }}">Tạm khóa</button>
-                        </div>
-
-                        <div class="flex flex-col rounded-lg border p-4">
-                            <span class="flex size-9 items-center justify-center rounded-full bg-danger-soft text-danger"><x-icon name="ban" class="size-5" /></span>
-                            <p class="mt-3 font-semibold">Vi phạm nghiêm trọng</p>
-                            <p class="mt-1 flex-1 text-xs text-muted-foreground">Gian lận thông tin, vi phạm đạo đức nghiêm trọng hoặc tái phạm nhiều lần.</p>
-                            <button type="button" class="btn btn-danger btn-sm mt-4"
-                                data-confirm data-confirm-tone="danger"
-                                data-confirm-title="Đình chỉ vĩnh viễn"
-                                data-confirm-message="Tài khoản {{ $account->full_name }} sẽ bị đình chỉ vĩnh viễn và KHÔNG THỂ khôi phục."
-                                data-confirm-action="{{ route('admin.accounts.suspend', $id) }}"
-                                data-confirm-reason="Lý do đình chỉ"
-                                data-confirm-label="Đình chỉ">Đình chỉ vĩnh viễn</button>
-                        </div>
-                    </div>
-                </section>
-            @endif
 
             {{-- ===== Lịch sử hoạt động (activity_logs) ===== --}}
             <section class="card">
