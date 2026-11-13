@@ -1,8 +1,14 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
+use App\Models\TutorClass;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+Schedule::call(function () {
+    TutorClass::where('status', 'Processing')
+          ->where('locked_until', '<=', now())
+          ->update([
+              'status' => 'Recruiting',
+              'holding_tutor_id' => null,
+              'locked_until' => null
+          ]);
+})->everyMinute()->name('unlock_expired_tutor_classes')->withoutOverlapping();

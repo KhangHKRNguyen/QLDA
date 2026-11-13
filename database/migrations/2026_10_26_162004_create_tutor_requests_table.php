@@ -17,7 +17,8 @@ return new class extends Migration
             $table->unsignedTinyInteger('sessions_per_week');
             $table->decimal('desired_tuition_fee', 12, 2)->nullable();
             $table->string('status', 30)->default('pending');
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('sla_deadline')->nullable(); // Thêm cột phục vụ SLA 4 tiếng
+            $table->timestamps(); // Thay thế $table->timestamp('created_at')->useCurrent(); bằng chuẩn Laravel (sinh ra cả created_at và updated_at)
             $table->text('notes')->nullable();
             $table->text('cancellation_reason')->nullable();
 
