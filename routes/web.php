@@ -164,7 +164,16 @@ Route::get('/admin/lop-hoc', function () {
 })->name('admin.tutor-classes.index');
 
 
+// Đăng nhập xong vào đây: mỗi vai trò thêm 1 nhánh if chuyển tới trang của mình,
+// vai trò chưa có trang riêng thì vẫn thấy dashboard trắng.
 Route::get('/dashboard', function () {
+    $role = auth()->user()->role?->role_name; // tên vai trò trong bảng roles
+
+    // Quản lý → Quản lý tài khoản (Trang)
+    if ($role === 'Quản lý') {
+        return redirect()->route('admin.accounts.index');
+    }
+
     return view('dashboard');
 })->middleware('auth')->name('dashboard');
 
