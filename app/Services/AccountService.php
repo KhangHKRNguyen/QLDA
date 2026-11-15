@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\ActivityLog;
 use App\Models\Notification;
 use App\Models\Person;
+use App\Models\RefundRequest;
 use DomainException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -140,7 +141,7 @@ class AccountService
             'pending_refunds' => DB::table('refund_requests')
                 ->join('payment_transactions', 'payment_transactions.payment_transaction_id', '=', 'refund_requests.payment_transaction_id')
                 ->where('payment_transactions.account_id', $id)
-                ->where('refund_requests.status', 'pending')
+                ->whereIn('refund_requests.status', RefundRequest::OPEN_STATUSES)
                 ->count(),
         ];
     }

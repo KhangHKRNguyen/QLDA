@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AccountController;
+use App\Http\Controllers\Admin\RefundController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Customer\TutorSearchRequestController;
 use App\Http\Controllers\Customer\PublicArticleController;
@@ -79,6 +80,38 @@ Route::prefix('admin/tai-khoan')
             ->whereNumber('id')
             ->middleware('can:account.delete')
             ->name('destroy');
+    });
+
+
+/*
+| 2b. TRUNG TÂM XỬ LÝ HOÀN PHÍ — vai trò Quản lý (quyền refund.* trong bảng permissions)
+*/
+
+Route::prefix('admin/hoan-phi')
+    ->name('admin.refunds.')
+    ->middleware(['auth', 'can:refund.view'])
+    ->controller(RefundController::class)
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+
+        Route::get('/{id}', 'show')
+            ->whereNumber('id')
+            ->name('show');
+
+        Route::post('/{id}/duyet', 'approve')
+            ->whereNumber('id')
+            ->middleware('can:refund.approve')
+            ->name('approve');
+
+        Route::post('/{id}/tu-choi', 'reject')
+            ->whereNumber('id')
+            ->middleware('can:refund.reject')
+            ->name('reject');
+
+        Route::post('/{id}/hoan-tien-lai', 'retry')
+            ->whereNumber('id')
+            ->middleware('can:refund.execute')
+            ->name('retry');
     });
 
 

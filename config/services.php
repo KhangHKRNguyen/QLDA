@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // Cổng hoàn tiền (giả lập) — xem App\Services\RefundGateway
+    'refund_gateway' => [
+        'result' => env('REFUND_GATEWAY_RESULT', 'success'),
+    ],
+
 ];

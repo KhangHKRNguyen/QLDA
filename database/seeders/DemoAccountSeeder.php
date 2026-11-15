@@ -102,6 +102,7 @@ class DemoAccountSeeder extends Seeder
         ]);
         DB::table('refund_requests')->insert([
             'reason' => 'Phụ huynh đổi lịch, không tiếp tục học.', 'source_type' => 'tutor',
+            'reason_code' => 'center_fault', 'requested_by' => $ids['tutor07'],
             'expected_refund_amount' => 300000, 'status' => 'pending', 'received_at' => now()->subDays(2),
             'payment_transaction_id' => $paidId,
         ]);

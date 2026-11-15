@@ -33,7 +33,7 @@ return [
             ['label' => 'Lớp học',           'path' => '/admin/lop-hoc',  'roles' => ['Nhân viên Quản lý khách hàng', 'Quản lý']],
             ['label' => 'Tài khoản gia sư',  'path' => '/admin/gia-su',   'roles' => ['Nhân viên Quản lý Gia sư']],
             ['label' => 'Quản lý tài khoản', 'path' => '/admin/tai-khoan', 'roles' => ['Quản lý']], // Chương 2: chỉ vai trò Quản lý
-            ['label' => 'Yêu cầu hoàn phí',  'path' => '/admin/hoan-phi', 'roles' => ['Nhân viên Quản lý khách hàng', 'Quản lý']],
+            ['label' => 'Yêu cầu hoàn phí',  'path' => '/admin/hoan-phi', 'roles' => ['Quản lý']], // xử lý hoàn phí: chỉ Quản lý (quyền refund.view)
             ['label' => 'Bài viết',          'path' => '/admin/bai-viet', 'roles' => ['Nhân viên Marketing']],
             ['label' => 'Báo cáo',           'path' => '/admin/bao-cao',  'roles' => ['Giám đốc']],
         ],
