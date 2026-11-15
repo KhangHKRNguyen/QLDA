@@ -191,9 +191,8 @@ class AccountController extends Controller
         return back()->with('success', $success);
     }
 
-    /** TODO (sau khi Khang làm xong Auth): trả về account_id của người đang đăng nhập */
     private function actorId(): ?int
     {
-        return null;
+        return auth()->id();
     }
 }
