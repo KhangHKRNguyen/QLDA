@@ -66,3 +66,4 @@ Route::get('/admin/yeu-cau', function () {
 Route::get('/admin/lop-hoc', function () {
     return view('admin.tutor_classes.index');
 })->name('admin.tutor-classes.index');
+require __DIR__.'/tutor-accounts.php';

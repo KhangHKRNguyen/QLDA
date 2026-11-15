@@ -32,6 +32,7 @@ class Account extends Model
         'incomplete'           => ['Chưa hoàn tất', 'neutral'],
         'rejected'             => ['Đã từ chối', 'danger'],
         'inactive'             => ['Ngừng hoạt động', 'neutral'],
+        'cancelled' => ['Đã hủy đăng ký', 'neutral'],
     ];
 
     protected function casts(): array
