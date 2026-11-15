@@ -83,6 +83,15 @@ class Account extends Authenticatable
         );
     }
 
+    /** Tài khoản có quyền này không (permissions.permission_name, gán theo vai trò qua permission_role) */
+    public function hasPermission(string $permission): bool
+    {
+        // once(): mỗi request chỉ truy vấn danh sách quyền một lần cho mỗi tài khoản
+        $names = once(fn () => $this->role?->permissions()->pluck('permission_name')->all() ?? []);
+
+        return in_array($permission, $names, true);
+    }
+
     public function statusLabel(): string
     {
         return self::STATUSES[$this->status][0] ?? $this->status;

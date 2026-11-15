@@ -28,14 +28,14 @@ return [
     'menu' => [
         'admin' => [
             ['label' => 'Tổng quan',         'path' => '/admin'],
-            ['label' => 'Yêu cầu khách hàng', 'path' => '/admin/yeu-cau',  'roles' => ['nv_khach_hang']],
-            ['label' => 'Lớp học',           'path' => '/admin/lop-hoc',  'roles' => ['nv_khach_hang', 'quan_ly_trung_tam']],
-            ['label' => 'Tài khoản gia sư',  'path' => '/admin/gia-su',   'roles' => ['nv_gia_su']],
-            // roles dùng đúng roles.role_name trong DB (Chương 2: chỉ vai trò Quản lý)
-            ['label' => 'Quản lý tài khoản', 'path' => '/admin/tai-khoan', 'roles' => ['Quản lý']],
-            ['label' => 'Yêu cầu hoàn phí',  'path' => '/admin/hoan-phi', 'roles' => ['nv_khach_hang', 'quan_ly_trung_tam']],
-            ['label' => 'Bài viết',          'path' => '/admin/bai-viet', 'roles' => ['marketing']],
-            ['label' => 'Báo cáo',           'path' => '/admin/bao-cao',  'roles' => ['giam_doc']],
+            // roles phải khớp đúng roles.role_name trong DB (xem RoleSeeder)
+            ['label' => 'Yêu cầu khách hàng', 'path' => '/admin/yeu-cau',  'roles' => ['Nhân viên Quản lý khách hàng']],
+            ['label' => 'Lớp học',           'path' => '/admin/lop-hoc',  'roles' => ['Nhân viên Quản lý khách hàng', 'Quản lý']],
+            ['label' => 'Tài khoản gia sư',  'path' => '/admin/gia-su',   'roles' => ['Nhân viên Quản lý Gia sư']],
+            ['label' => 'Quản lý tài khoản', 'path' => '/admin/tai-khoan', 'roles' => ['Quản lý']], // Chương 2: chỉ vai trò Quản lý
+            ['label' => 'Yêu cầu hoàn phí',  'path' => '/admin/hoan-phi', 'roles' => ['Nhân viên Quản lý khách hàng', 'Quản lý']],
+            ['label' => 'Bài viết',          'path' => '/admin/bai-viet', 'roles' => ['Nhân viên Marketing']],
+            ['label' => 'Báo cáo',           'path' => '/admin/bao-cao',  'roles' => ['Giám đốc']],
         ],
         'tutor' => [
             ['label' => 'Tổng quan',       'path' => '/gia-su'],

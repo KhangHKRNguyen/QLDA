@@ -2,9 +2,12 @@
 @php
     $id         = $account->account_id;
     $label      = $account->statusLabel();
-    $canLock    = $account->status === 'active';
-    $canSuspend = in_array($account->status, ['active', 'locked'], true);
-    $canDelete  = in_array($account->status, ['active', 'locked'], true);
+    $isSelf     = $id === (int) auth()->id(); // không tự khóa / đình chỉ / xóa tài khoản của mình
+    $user       = auth()->user();
+    $canLock    = ! $isSelf && $account->status === 'active' && $user->can('account.lock_temporary');
+    $canSuspend = ! $isSelf && in_array($account->status, ['active', 'locked'], true) && $user->can('account.lock_permanent');
+    $canDelete  = ! $isSelf && in_array($account->status, ['active', 'locked'], true) && $user->can('account.delete');
+    $canUnlock  = $user->can('account.unlock');
     $conditions = [
         [$checks['active_classes'] <= 0, 'Không có lớp đang dạy', "Còn {$checks['active_classes']} lớp đang dạy"],
         [$checks['unpaid_fees'] <= 0, 'Không nợ phí', 'Còn nợ phí ' . number_format($checks['unpaid_fees'], 0, ',', '.') . ' đ'],
@@ -63,6 +66,7 @@
                 <p class="mt-1">Lý do: {{ $account->lock_reason ?: '—' }}</p>
                 <p class="mt-1 text-xs opacity-80">Hệ thống sẽ tự động mở khóa và gửi thông báo khi hết thời hạn.</p>
             </div>
+            @if ($canUnlock)
             <button type="button" class="btn btn-outline btn-sm"
                 data-confirm
                 data-confirm-title="Mở khóa tài khoản"
@@ -71,6 +75,7 @@
                 data-confirm-label="Mở khóa">
                 <x-icon name="unlock" /> Mở khóa ngay
             </button>
+            @endif
         </div>
     @elseif ($account->status === 'suspended')
         <div class="notice notice-danger">

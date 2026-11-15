@@ -9,6 +9,7 @@ use App\Services\AccountService;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -142,7 +143,7 @@ class AccountController extends Controller
 
         $days = (int) $data['days'];
 
-        return $this->run(fn () => $this->service->lock($this->find($id), $data['reason'], $days, $this->actorId()),
+        return $this->run(fn () => $this->service->lock($this->findOther($id), $data['reason'], $days, $this->actorId()),
             'Đã tạm khóa tài khoản đến ' . now()->addDays($days)->format('d/m/Y') . '.');
     }
 
@@ -150,7 +151,7 @@ class AccountController extends Controller
     {
         $data = $request->validate(['reason' => ['required', 'string', 'min:5', 'max:500']], [], ['reason' => 'lý do']);
 
-        return $this->run(fn () => $this->service->suspend($this->find($id), $data['reason'], $this->actorId()),
+        return $this->run(fn () => $this->service->suspend($this->findOther($id), $data['reason'], $this->actorId()),
             'Đã đình chỉ vĩnh viễn tài khoản.');
     }
 
@@ -164,13 +165,23 @@ class AccountController extends Controller
     {
         $data = $request->validate(['reason' => ['required', 'string', 'min:5', 'max:500']], [], ['reason' => 'lý do']);
 
-        return $this->run(fn () => $this->service->deactivate($this->find($id), $data['reason'], $this->actorId()),
+        return $this->run(fn () => $this->service->deactivate($this->findOther($id), $data['reason'], $this->actorId()),
             'Tài khoản đã chuyển sang Ngừng hoạt động.');
     }
 
     private function find(int $id): Account
     {
         return Account::withProfile()->where('accounts.account_id', $id)->firstOrFail();
+    }
+
+    /** Dùng cho khóa / đình chỉ / xóa: không cho người quản lý tự xử lý tài khoản của chính mình */
+    private function findOther(int $id): Account
+    {
+        if ($id === $this->actorId()) {
+            throw new DomainException('Bạn không thể thực hiện thao tác này trên tài khoản của chính mình.');
+        }
+
+        return $this->find($id);
     }
 
     /** Các vai trò được cấp tài khoản (bỏ Phụ huynh) */
@@ -191,8 +202,11 @@ class AccountController extends Controller
         return back()->with('success', $success);
     }
 
+    /** account_id của người đang đăng nhập (ép kiểu int để so sánh chính xác với id trên URL) */
     private function actorId(): ?int
     {
-        return auth()->id();
+        $id = Auth::id();
+
+        return $id === null ? null : (int) $id;
     }
 }

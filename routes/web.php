@@ -35,35 +35,49 @@ Route::view('/mau-giao-dien', 'mau-giao-dien');
 
 
 /*
-| 2. QUẢN LÝ TÀI KHOẢN
+| 2. QUẢN LÝ TÀI KHOẢN — phải đăng nhập; mỗi thao tác cần đúng quyền account.* (bảng permissions)
 */
 
 Route::prefix('admin/tai-khoan')
     ->name('admin.accounts.')
+    ->middleware('auth')
     ->controller(AccountController::class)
     ->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('/them-moi', 'create')->name('create');
-        Route::post('/', 'store')->name('store');
+        Route::get('/', 'index')
+            ->middleware('can:account.view')
+            ->name('index');
+
+        Route::get('/them-moi', 'create')
+            ->middleware('can:account.create')
+            ->name('create');
+
+        Route::post('/', 'store')
+            ->middleware('can:account.create')
+            ->name('store');
 
         Route::get('/{id}', 'show')
             ->whereNumber('id')
+            ->middleware('can:account.view')
             ->name('show');
 
         Route::post('/{id}/tam-khoa', 'lock')
             ->whereNumber('id')
+            ->middleware('can:account.lock_temporary')
             ->name('lock');
 
         Route::post('/{id}/dinh-chi', 'suspend')
             ->whereNumber('id')
+            ->middleware('can:account.lock_permanent')
             ->name('suspend');
 
         Route::post('/{id}/mo-khoa', 'unlock')
             ->whereNumber('id')
+            ->middleware('can:account.unlock')
             ->name('unlock');
 
         Route::delete('/{id}', 'destroy')
             ->whereNumber('id')
+            ->middleware('can:account.delete')
             ->name('destroy');
     });
 

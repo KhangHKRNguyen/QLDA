@@ -7,7 +7,7 @@
 @php
     $panel = $panel ?? 'admin';
     $user  = auth()->user();
-    $role  = $user->role ?? null;   // chưa có cột role / chưa đăng nhập → hiện đủ menu để dev xem
+    $role  = $user?->role?->role_name;   // tên vai trò (roles.role_name); chưa đăng nhập → hiện đủ menu để dev xem
     $items = collect(config("site.menu.$panel"))
         ->filter(fn ($i) => empty($i['roles']) || ! $role || in_array($role, $i['roles'], true));
 @endphp

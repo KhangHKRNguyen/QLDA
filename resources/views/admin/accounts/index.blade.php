@@ -8,12 +8,15 @@
     <a href="{{ url('/admin') }}">Tổng quan</a> / <span class="font-medium text-foreground">Tài khoản</span>
 @endsection
 @section('actions')
-    <a href="{{ route('admin.accounts.create') }}" class="btn btn-primary">+ Thêm tài khoản</a>
+    @can('account.create')
+        <a href="{{ route('admin.accounts.create') }}" class="btn btn-primary">+ Thêm tài khoản</a>
+    @endcan
 @endsection
 
 @section('content')
 @php
     $filters  = array_filter(request()->only('q', 'role', 'status'));
+    $selfId   = (int) auth()->id();
     $cards = [
         ['label' => 'Tổng tài khoản', 'value' => $stats['all'],                  'status' => null,                   'color' => 'text-foreground'],
         ['label' => 'Đang hoạt động', 'value' => $stats['active'],               'status' => 'active',               'color' => 'text-success'],
@@ -126,13 +129,13 @@
                             <td class="whitespace-nowrap text-muted-foreground">{{ $a->status_updated_at?->format('d/m/Y') ?? '—' }}</td>
                             <td>
                                 <div class="flex justify-end gap-1.5">
-                                    @if ($a->status === 'active')
+                                    @if ($a->status === 'active' && $a->account_id !== $selfId && auth()->user()->can('account.lock_temporary'))
                                         <button type="button" class="btn btn-ghost btn-sm"
                                             data-lock-action="{{ route('admin.accounts.lock', $a->account_id) }}"
                                             data-lock-name="{{ $a->full_name }}">
                                             <x-icon name="lock" /> Tạm khóa
                                         </button>
-                                    @elseif ($a->status === 'locked')
+                                    @elseif ($a->status === 'locked' && auth()->user()->can('account.unlock'))
                                         <button type="button" class="btn btn-ghost btn-sm"
                                             data-confirm
                                             data-confirm-title="Mở khóa tài khoản"
