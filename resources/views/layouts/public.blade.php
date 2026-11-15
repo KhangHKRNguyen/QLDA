@@ -23,7 +23,41 @@
                 </ul>
             </nav>
 
-            <a href="{{ url('/gia-su/dang-nhap') }}" class="btn btn-outline hidden lg:inline-flex">Dành cho gia sư</a>
+            @auth
+                <details class="relative hidden lg:block">
+                    <summary class="btn btn-outline inline-flex cursor-pointer list-none items-center gap-2">
+                        <x-icon name="user-circle" class="size-5" />
+                        <span class="max-w-36 truncate">
+                            {{ auth()->user()->name }}
+                        </span>
+                        <x-icon name="chevron-down" class="size-4" />
+                    </summary>
+
+                    <div class="absolute right-0 z-50 mt-2 w-56 rounded-xl border bg-card p-2 shadow-lg">
+                        <a href="{{ route('profile.edit') }}"
+                        class="block rounded-lg px-3 py-2 text-sm hover:bg-muted">
+                            <x-icon name="user" class="mr-2 inline size-4" />
+                            Thông tin cá nhân
+                        </a>
+
+                        <div class="my-1 border-t"></div>
+
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit"
+                                    class="block w-full rounded-lg px-3 py-2 text-left text-sm text-destructive hover:bg-muted">
+                                <x-icon name="log-out" class="mr-2 inline size-4" />
+                                Đăng xuất
+                            </button>
+                        </form>
+                    </div>
+                </details>
+            @else
+                <a href="{{ route('login') }}"
+                class="btn btn-outline hidden lg:inline-flex">
+                    Đăng nhập
+                </a>
+            @endauth
 
             <button type="button" class="btn btn-ghost btn-icon lg:hidden" data-toggle="#mobile-nav"
                     aria-label="Mở/đóng menu" aria-expanded="false" aria-controls="mobile-nav">
@@ -42,7 +76,42 @@
                         </a>
                     </li>
                 @endforeach
-                <li class="pt-2"><a href="{{ url('/gia-su/dang-nhap') }}" class="btn btn-outline w-full">Dành cho gia sư</a></li>
+                <li class="pt-2">
+                    @auth
+                        <details>
+                            <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg border px-3 py-2.5 text-sm font-medium">
+                                <span class="flex items-center gap-2">
+                                    <x-icon name="user-circle" class="size-5" />
+                                    {{ auth()->user()->name }}
+                                </span>
+                                <x-icon name="chevron-down" class="size-4" />
+                            </summary>
+
+                            <div class="mt-2 rounded-lg border bg-card p-2">
+                                <a href="{{ route('profile.edit') }}"
+                                class="block rounded-lg px-3 py-2.5 text-sm hover:bg-muted">
+                                    <x-icon name="user" class="mr-2 inline size-4" />
+                                    Thông tin cá nhân
+                                </a>
+
+                                <div class="my-1 border-t"></div>
+
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit"
+                                            class="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-destructive hover:bg-muted">
+                                        <x-icon name="log-out" class="mr-2 inline size-4" />
+                                        Đăng xuất
+                                    </button>
+                                </form>
+                            </div>
+                        </details>
+                    @else
+                        <a href="{{ route('login') }}" class="btn btn-outline w-full">
+                            Đăng nhập
+                        </a>
+                    @endauth
+                </li>
             </ul>
         </nav>
     </header>

@@ -1,13 +1,20 @@
+import Alpine from 'alpinejs';
 
-const $  = (s, r = document) => r.querySelector(s);
+window.Alpine = Alpine;
+
+// Các hàm tiện ích DOM
+const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
 /* ================= TOAST =================
-   JS:     toast('Thêm yêu cầu thành công');  toast('Có lỗi', 'error');
-   Server: tự hiện khi redirect()->with('success' | 'error' | 'info', '...') */
+   JS: toast('Thêm thành công');
+       toast('Có lỗi', 'error');
+   Server: redirect()->with('success' | 'error' | 'info', '...')
+*/
 window.toast = function (message, type = 'success') {
     const root = $('#toast-root');
     if (!root) return;
+
     const el = document.createElement('div');
     el.className = `toast toast-${type}`;
     el.setAttribute('role', type === 'error' ? 'alert' : 'status');
@@ -22,14 +29,22 @@ window.toast = function (message, type = 'success') {
     close.setAttribute('aria-label', 'Đóng thông báo');
     close.textContent = '×';
 
-    const remove = () => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); };
+    const remove = () => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+    };
+
     close.addEventListener('click', remove);
     el.append(text, close);
     root.append(el);
+
     setTimeout(remove, 5000);
 };
 
-$$('[data-flash]').forEach((el) => window.toast(el.textContent.trim(), el.dataset.flash));
+$$('[data-flash]').forEach((el) => {
+    window.toast(el.textContent.trim(), el.dataset.flash);
+});
+
 
 /* ================= POPUP XÁC NHẬN =================
    <button type="button" class="btn btn-danger"
@@ -41,72 +56,126 @@ $$('[data-flash]').forEach((el) => window.toast(el.textContent.trim(), el.datase
        data-confirm-label="Xóa"
        data-confirm-tone="danger"
        data-confirm-reason="Lý do xóa">
-   - data-confirm-reason: có thuộc tính này thì hiện ô nhập lý do (gửi lên với name="reason").
-   - Không bắt buộc lý do: thêm data-confirm-reason-required="false". */
+*/
 function openConfirm(btn) {
     const d = btn.dataset;
     const form = $('#confirm-form');
+
+    if (!form) return;
+
     $('#confirm-title').textContent = d.confirmTitle || 'Xác nhận';
     $('#confirm-message').textContent = d.confirmMessage || '';
+
     form.action = d.confirmAction || '#';
-    $('input[name="_method"]', form).value = (d.confirmMethod || 'POST').toUpperCase();
+    $('input[name="_method"]', form).value =
+        (d.confirmMethod || 'POST').toUpperCase();
 
     const submit = $('#confirm-submit');
     submit.textContent = d.confirmLabel || 'Xác nhận';
-    submit.className = 'btn ' + (d.confirmTone === 'danger' ? 'btn-danger' : 'btn-primary');
+    submit.className = 'btn ' +
+        (d.confirmTone === 'danger' ? 'btn-danger' : 'btn-primary');
 
     const reason = $('#confirm-reason');
     $('#confirm-reason-box').hidden = d.confirmReason === undefined;
     $('#confirm-reason-label').textContent = d.confirmReason || 'Lý do';
+
     reason.required = d.confirmReasonRequired !== 'false';
     reason.value = '';
     reason.removeAttribute('aria-invalid');
+
     $('#confirm-reason-error').hidden = true;
     $('#confirm-modal').showModal();
 }
 
 $('#confirm-form')?.addEventListener('submit', (e) => {
     const reason = $('#confirm-reason');
-    if (!$('#confirm-reason-box').hidden && reason.required && reason.value.trim().length < 5) {
+    const reasonBox = $('#confirm-reason-box');
+
+    if (
+        !reasonBox.hidden &&
+        reason.required &&
+        reason.value.trim().length < 5
+    ) {
         e.preventDefault();
+
         $('#confirm-reason-error').hidden = false;
         reason.setAttribute('aria-invalid', 'true');
         reason.focus();
     }
 });
 
+
 /* ================= CLICK TOÀN TRANG ================= */
+
 document.addEventListener('click', (e) => {
-    // Mở popup bất kỳ: <button data-modal-open="id-popup">
-    const open = e.target.closest('[data-modal-open]');
-    if (open) { document.getElementById(open.dataset.modalOpen)?.showModal(); return; }
+    const target = e.target;
 
-    // Đóng popup: <button data-modal-close>
-    if (e.target.closest('[data-modal-close]')) { e.target.closest('dialog')?.close(); return; }
+    // Mở popup
+    const open = target.closest('[data-modal-open]');
+    if (open) {
+        document.getElementById(open.dataset.modalOpen)?.showModal();
+        return;
+    }
 
-    // Bấm ra vùng nền tối để đóng
-    if (e.target instanceof HTMLDialogElement) { e.target.close(); return; }
+    // Đóng popup
+    if (target.closest('[data-modal-close]')) {
+        target.closest('dialog')?.close();
+        return;
+    }
 
-    const confirmBtn = e.target.closest('[data-confirm]');
-    if (confirmBtn) { e.preventDefault(); openConfirm(confirmBtn); return; }
+    // Bấm ra vùng nền tối để đóng popup
+    if (target instanceof HTMLDialogElement) {
+        target.close();
+        return;
+    }
 
-    // Menu mobile (header trang khách): <button data-toggle="#mobile-nav">
-    const tg = e.target.closest('[data-toggle]');
+    // Popup xác nhận
+    const confirmBtn = target.closest('[data-confirm]');
+    if (confirmBtn) {
+        e.preventDefault();
+        openConfirm(confirmBtn);
+        return;
+    }
+
+    // Menu mobile trang khách
+    const tg = target.closest('[data-toggle]');
+
     if (tg) {
-        const target = $(tg.dataset.toggle);
-        target.hidden = !target.hidden;
-        tg.setAttribute('aria-expanded', String(!target.hidden));
+        const element = $(tg.dataset.toggle);
+
+        if (!element) return;
+
+        element.hidden = !element.hidden;
+        tg.setAttribute('aria-expanded', String(!element.hidden));
         return;
     }
 
-    // Sidebar mobile (layout panel)
-    if (e.target.closest('[data-sidebar-toggle]')) {
-        const on = $('.sidebar').classList.toggle('is-open');
-        $('#sidebar-backdrop').hidden = !on;
+    // Sidebar mobile
+    if (target.closest('[data-sidebar-toggle]')) {
+        const sidebar = $('.sidebar');
+
+        if (!sidebar) return;
+
+        const on = sidebar.classList.toggle('is-open');
+        const backdrop = $('#sidebar-backdrop');
+
+        if (backdrop) {
+            backdrop.hidden = !on;
+        }
+
         return;
     }
-    if (e.target.closest('#sidebar-backdrop')) {
-        $('.sidebar').classList.remove('is-open');
-        $('#sidebar-backdrop').hidden = true;
+
+    // Đóng sidebar khi bấm vào backdrop
+    if (target.closest('#sidebar-backdrop')) {
+        $('.sidebar')?.classList.remove('is-open');
+
+        const backdrop = $('#sidebar-backdrop');
+        if (backdrop) {
+            backdrop.hidden = true;
+        }
     }
 });
+
+// Khởi động Alpine sau khi đăng ký các chức năng cũ
+Alpine.start();

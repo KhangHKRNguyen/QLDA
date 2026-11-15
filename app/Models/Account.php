@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
-class Account extends Model
+class Account extends Authenticatable
 {
     protected $primaryKey = 'account_id';
 
@@ -70,10 +70,17 @@ class Account extends Model
                 'people.gender', 'people.address', 'people.district');
     }
 
-    /** Chữ cái đầu của tên (để làm avatar) */
     protected function initial(): Attribute
     {
-        return Attribute::get(fn () => mb_strtoupper(mb_substr(Str::afterLast((string) $this->full_name, ' '), 0, 1)));
+        return Attribute::get(
+            fn () => mb_strtoupper(
+                mb_substr(
+                    Str::afterLast((string) $this->name, ' '),
+                    0,
+                    1
+                )
+            )
+        );
     }
 
     public function statusLabel(): string
@@ -84,5 +91,14 @@ class Account extends Model
     public function statusTone(): string
     {
         return self::STATUSES[$this->status][1] ?? 'neutral';
+    }
+
+    protected function name(): Attribute
+    {
+        return Attribute::get(
+            fn () => $this->attributes['full_name']
+                ?? $this->person?->full_name
+                ?? $this->username
+        );
     }
 }
