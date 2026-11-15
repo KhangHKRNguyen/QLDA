@@ -9,7 +9,7 @@ use App\Http\Controllers\Customer\PublicArticleController;
 /*
 | 1. LUỒNG CÔNG KHAI
 */
-// Trang chủ công khai (Hiển thị ngay khi vào web)
+// Trang chủ công khai
 Route::get('/', [TutorSearchRequestController::class, 'index'])
     ->name('customer.home');
 
@@ -57,3 +57,12 @@ Route::prefix('admin')->name('staff.articles.')->group(function () {
     Route::patch('/bai-viet/{postId}/hien-lai', [ArticleController::class, 'unhide'])->name('unhide');
     Route::delete('/bai-viet/{postId}', [ArticleController::class, 'destroy'])->name('destroy');
 });
+
+// Các giao diện quản lý bổ sung
+Route::get('/admin/yeu-cau', function () {
+    return view('admin.tutor_requests.index');
+})->name('admin.tutor-requests.index');
+
+Route::get('/admin/lop-hoc', function () {
+    return view('admin.tutor_classes.index');
+})->name('admin.tutor-classes.index');

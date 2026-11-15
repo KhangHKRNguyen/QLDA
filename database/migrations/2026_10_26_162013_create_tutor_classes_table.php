@@ -21,6 +21,7 @@ return new class extends Migration
             $table->decimal('enrollment_fee', 12, 2)->default(0);
             $table->timestamp('accepted_at')->nullable();
             $table->timestamp('locked_at')->nullable();
+            $table->timestamps(); // Thêm để Laravel ORM hoạt động trơn tru
 
             $table->foreignId('person_id')
                 ->constrained('people', 'person_id')
