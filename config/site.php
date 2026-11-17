@@ -1,10 +1,6 @@
 <?php
 
-/*
- * Thông tin chung + menu của website. Sửa tại đây, không cần sửa blade.
- * 'path' dùng đường dẫn tương đối; 'roles' để trống = ai cũng thấy.
- * Tên role bên dưới chỉ là gợi ý — đổi cho khớp bảng VaiTro của nhóm.
- */
+
 return [
     'contact' => [
         'address' => 'Số 136 Xuân Thủy, Cầu Giấy, Hà Nội',
@@ -27,22 +23,24 @@ return [
     // Menu sidebar theo giao diện
     'menu' => [
         'admin' => [
-            ['label' => 'Tổng quan',         'path' => '/admin'],
-            // roles phải khớp đúng roles.role_name trong DB (xem RoleSeeder)
-            ['label' => 'Yêu cầu khách hàng', 'path' => '/admin/yeu-cau',  'roles' => ['Nhân viên Quản lý khách hàng']],
-            ['label' => 'Lớp học',           'path' => '/admin/lop-hoc',  'roles' => ['Nhân viên Quản lý khách hàng', 'Quản lý']],
-            ['label' => 'Tài khoản gia sư',  'path' => '/admin/gia-su',   'roles' => ['Nhân viên Quản lý Gia sư']],
-            ['label' => 'Quản lý tài khoản', 'path' => '/admin/tai-khoan', 'roles' => ['Quản lý']], // Chương 2: chỉ vai trò Quản lý
-            ['label' => 'Yêu cầu hoàn phí',  'path' => '/admin/hoan-phi', 'roles' => ['Quản lý']], // xử lý hoàn phí: chỉ Quản lý (quyền refund.view)
-            ['label' => 'Bài viết',          'path' => '/admin/bai-viet', 'roles' => ['Nhân viên Marketing']],
-            ['label' => 'Báo cáo',           'path' => '/admin/bao-cao',  'roles' => ['Giám đốc']],
+            ['label' => 'Tổng quan',          'path' => '/dashboard', 'active' => ['admin/gia-su/tong-quan']],
+            ['label' => 'Quản lý tài khoản',  'path' => '/admin/tai-khoan', 'roles' => ['Quản lý']],
+            ['label' => 'Tài khoản gia sư',   'path' => '/admin/gia-su',    'roles' => ['Nhân viên Quản lý Gia sư']],
+            ['label' => 'Yêu cầu khách hàng', 'path' => '/admin/yeu-cau',   'roles' => ['Nhân viên Quản lý khách hàng']],
+            ['label' => 'Lớp học',            'path' => '/admin/lop-hoc',   'roles' => ['Nhân viên Quản lý khách hàng', 'Quản lý']],
+            ['label' => 'Yêu cầu hoàn phí',   'path' => '/admin/hoan-phi',  'roles' => ['Quản lý']], // xử lý hoàn phí: chỉ Quản lý (quyền refund.view)
+            ['label' => 'Bài viết',           'path' => '/admin/bai-viet',  'roles' => ['Nhân viên Marketing']],
+            ['label' => 'Báo cáo',            'path' => '/admin/bao-cao',   'roles' => ['Giám đốc']],
+            ['label' => 'Thông báo',          'path' => '/admin/gia-su/thong-bao', 'roles' => ['Nhân viên Quản lý Gia sư']],
         ],
         'tutor' => [
-            ['label' => 'Tổng quan',       'path' => '/gia-su'],
-            ['label' => 'Lớp đang tuyển',  'path' => '/gia-su/lop-dang-tuyen'],
-            ['label' => 'Lớp của tôi',     'path' => '/gia-su/lop-cua-toi'],
-            ['label' => 'Hoàn phí',        'path' => '/gia-su/hoan-phi'],
-            ['label' => 'Hồ sơ cá nhân',   'path' => '/gia-su/ho-so'],
+            ['label' => 'Tổng quan',           'path' => '/gia-su'],
+            ['label' => 'Lớp đang tuyển',      'path' => '/gia-su/lop-dang-tuyen'],
+            ['label' => 'Lớp của tôi',         'path' => '/gia-su/lop-cua-toi'],
+            ['label' => 'Yêu cầu hoàn phí',    'path' => '/gia-su/hoan-phi'],
+            ['label' => 'Lịch sử thanh toán',  'path' => '/gia-su/thanh-toan'],
+            ['label' => 'Hồ sơ cá nhân',       'path' => '/gia-su/ho-so'],
+            ['label' => 'Thông báo',           'path' => '/gia-su/thong-bao'],
         ],
     ],
 

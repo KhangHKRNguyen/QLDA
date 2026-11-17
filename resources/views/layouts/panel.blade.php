@@ -7,20 +7,33 @@
 @php
     $panel = $panel ?? 'admin';
     $user  = auth()->user();
-    $role  = $user?->role?->role_name;   // tên vai trò (roles.role_name); chưa đăng nhập → hiện đủ menu để dev xem
+$role  = $user?->role?->role_name;
     $items = collect(config("site.menu.$panel"))
         ->filter(fn ($i) => empty($i['roles']) || ! $role || in_array($role, $i['roles'], true));
 @endphp
 
 <aside class="sidebar" aria-label="Thanh điều hướng">
     <div class="flex h-16 items-center border-b px-4">
-        <x-logo :href="url($panel === 'tutor' ? '/gia-su' : '/admin')" :subtitle="config('site.panel_names.' . $panel)" />
+      <x-logo :href="route($panel === 'tutor' ? 'tutor.dashboard' : 'dashboard')" :subtitle="config('site.panel_names.' . $panel)" />
     </div>
     <nav class="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Menu chức năng">
-        @foreach ($items as $item)
-            @php $active = $loop->first ? request()->is(ltrim($item['path'], '/')) : request()->is(ltrim($item['path'], '/') . '*'); @endphp
-            <a href="{{ url($item['path']) }}" class="nav-link" @if($active) aria-current="page" @endif>{{ $item['label'] }}</a>
-        @endforeach
+       @php
+    // Chỉ sáng MỘT mục: mục có đường dẫn khớp dài nhất
+    $current = null;
+    $best = -1;
+    foreach ($items as $i => $item) {
+        foreach (array_merge([$item['path']], $item['active'] ?? []) as $p) {
+            $p = ltrim($p, '/');
+            if ((request()->is($p) || request()->is($p . '/*')) && strlen($p) > $best) {
+                $best = strlen($p);
+                $current = $i;
+            }
+        }
+    }
+@endphp
+@foreach ($items as $i => $item)
+    <a href="{{ url($item['path']) }}" class="nav-link" @if($i === $current) aria-current="page" @endif>{{ $item['label'] }}</a>
+@endforeach
     </nav>
 </aside>
 <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
@@ -32,8 +45,17 @@
         </button>
         <div class="flex-1"></div>
         <div class="flex items-center gap-1">
-            <button type="button" class="btn btn-ghost btn-icon relative" aria-label="Thông báo">
-                <x-icon name="bell" class="size-5" />
+@php
+    $bellRole = $user?->role?->role_name;
+    $bellUrl = $panel === 'tutor'
+        ? route('tutor.notifications')
+        : ($bellRole === 'Nhân viên Quản lý Gia sư' ? route('admin.tutor-profiles.notifications') : null);
+    $unreadCount = $user ? \App\Models\Notification::where('account_id', $user->account_id)->where('is_read', false)->count() : 0;
+@endphp
+<a href="{{ $bellUrl ?? '#' }}" class="btn btn-ghost btn-icon relative" aria-label="Thông báo">
+    <x-icon name="bell" class="size-5" />
+    @if ($unreadCount > 0)<span class="absolute top-2 right-2 size-2 rounded-full bg-danger"></span>@endif
+</a>           
                 {{-- chấm đỏ khi có thông báo chưa đọc: bỏ comment dòng dưới --}}
                 {{-- <span class="absolute top-2 right-2 size-2 rounded-full bg-danger"></span> --}}
             </button>

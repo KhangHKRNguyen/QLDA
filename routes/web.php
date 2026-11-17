@@ -162,6 +162,7 @@ Route::get('/admin/yeu-cau', function () {
 Route::get('/admin/lop-hoc', function () {
     return view('admin.tutor_classes.index');
 })->name('admin.tutor-classes.index');
+require __DIR__.'/tutor-accounts.php';
 
 
 // Đăng nhập xong vào đây: mỗi vai trò thêm 1 nhánh if chuyển tới trang của mình,
@@ -173,6 +174,14 @@ Route::get('/dashboard', function () {
     if ($role === 'Quản lý') {
         return redirect()->route('admin.accounts.index');
     }
+
+    if ($role === 'Gia sư') {
+    return redirect()->route('tutor.dashboard');
+}
+if ($role === 'Nhân viên Quản lý Gia sư') {
+    return redirect()->route('admin.tutor-profiles.dashboard');
+}
+
 
     return view('dashboard');
 })->middleware('auth')->name('dashboard');

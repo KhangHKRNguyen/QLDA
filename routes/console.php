@@ -43,3 +43,4 @@ Schedule::call(function () {
              'locked_until' => null
          ]);
 })->everyMinute()->name('unlock_expired_tutor_classes')->withoutOverlapping();
+Schedule::command('tutor:process-registrations')->daily();

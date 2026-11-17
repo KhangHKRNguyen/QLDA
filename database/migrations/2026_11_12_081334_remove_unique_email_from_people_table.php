@@ -3,17 +3,20 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('ALTER TABLE people DROP INDEX people_email_unique');
+        Schema::table('people', function (Blueprint $table) {
+            $table->dropUnique('people_email_unique');
+        });
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE people ADD UNIQUE people_email_unique (email)');
+        Schema::table('people', function (Blueprint $table) {
+            $table->unique('email');
+        });
     }
 };
