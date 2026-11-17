@@ -119,6 +119,16 @@ require __DIR__.'/tutor-accounts.php';
 
 
 Route::get('/dashboard', function () {
+    $role = auth()->user()->role?->role_name;
+
+    if ($role === 'Gia sư') {
+    return redirect()->route('tutor.dashboard');
+}
+if ($role === 'Nhân viên Quản lý Gia sư') {
+    return redirect()->route('admin.tutor-profiles.dashboard');
+}
+    
+
     return view('dashboard');
 })->middleware('auth')->name('dashboard');
 

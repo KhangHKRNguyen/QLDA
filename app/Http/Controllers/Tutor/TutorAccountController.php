@@ -12,6 +12,7 @@ use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -40,8 +41,9 @@ class TutorAccountController extends Controller
             return back()->withInput($request->except('password', 'password_confirmation'))->with('error', $e->getMessage());
         }
 
-        // TODO (sau khi Khang làm xong Auth): thay bằng đăng nhập thật.
-        session(['tutor_account_id' => $account->account_id]);
+        // Tự đăng nhập sau khi đăng ký (trạng thái pending_verification được phép đăng nhập, xem LoginRequest)
+        Auth::login($account);
+        $request->session()->regenerate();
 
         return redirect()->route('tutor.status')
             ->with('success', 'Đã gửi hồ sơ đăng ký. Trung tâm sẽ xác minh và thông báo kết quả cho bạn.');
@@ -50,9 +52,6 @@ class TutorAccountController extends Controller
     public function status(): View|RedirectResponse
     {
         $account = $this->currentAccount();
-        if (! $account) {
-            return redirect()->route('tutor.register')->with('info', 'Vui lòng đăng ký tài khoản gia sư trước.');
-        }
 
         $docs = VerificationProfile::where('person_id', $account->person_id)
             ->orderBy('verification_profile_id')->get();
@@ -68,7 +67,6 @@ class TutorAccountController extends Controller
     public function supplement(Request $request): RedirectResponse
     {
         $account = $this->currentAccount();
-        abort_unless($account, 403);
 
         $rules = [];
         foreach (VerificationProfile::where('person_id', $account->person_id)
@@ -95,7 +93,6 @@ class TutorAccountController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         $account = $this->currentAccount();
-        abort_unless($account, 403);
 
         $data = $request->validate(['reason' => ['required', 'string', 'min:5', 'max:500']], [], ['reason' => 'lý do']);
 
@@ -105,16 +102,16 @@ class TutorAccountController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        session()->forget('tutor_account_id');
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect()->route('customer.home')->with('success', 'Tài khoản của bạn đã ngừng hoạt động.');
     }
 
-    /** TODO (sau khi Khang làm xong Auth): trả về tài khoản đang đăng nhập thay vì đọc session tạm */
-    private function currentAccount(): ?Account
+    /** Gia sư đang đăng nhập, kèm thông tin people + roles (route đã có middleware auth + role) */
+    private function currentAccount(): Account
     {
-        $id = session('tutor_account_id');
-
-        return $id ? Account::withProfile()->where('accounts.account_id', $id)->first() : null;
+        return Account::withProfile()->where('accounts.account_id', Auth::id())->firstOrFail();
     }
 }

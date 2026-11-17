@@ -14,6 +14,7 @@
 @php
     $canReview = $account->status === 'pending_verification';
     $canReject = in_array($account->status, ['pending_verification', 'supplement_required'], true);
+    $canDiscipline = in_array($account->status, ['active', 'locked'], true);
 @endphp
 <div class="space-y-6">
     @if ($errors->any())
@@ -101,6 +102,44 @@
         </section>
     @endif
 
+    @if ($canDiscipline)
+        <section class="card">
+            <header class="card-header">
+                <div>
+                    <h2 class="card-title">Xử lý vi phạm</h2>
+                    <p class="card-desc">Vi phạm nhẹ: tạm khóa 7–30 ngày, hết hạn hệ thống tự mở lại. Vi phạm nghiêm trọng: đình chỉ vĩnh viễn.</p>
+                </div>
+            </header>
+            <div class="card-body space-y-3">
+                @if ($account->status === 'locked')
+                    <div class="notice notice-warning">
+                        Đang tạm khóa @if ($account->lock_expires_at) đến <strong>{{ $account->lock_expires_at->format('d/m/Y') }}</strong> @endif.
+                        @if ($account->lock_reason) Lý do: {{ $account->lock_reason }} @endif
+                    </div>
+                @endif
+                <div class="flex flex-wrap gap-2">
+                    @if ($account->status === 'active')
+                        <button type="button" class="btn btn-outline" data-modal-open="lock-modal">Tạm khóa</button>
+                    @else
+                        <button type="button" class="btn btn-outline"
+                            data-confirm
+                            data-confirm-title="Mở khóa tài khoản"
+                            data-confirm-message="Tài khoản {{ $account->full_name }} sẽ hoạt động trở lại trước thời hạn."
+                            data-confirm-action="{{ route('admin.tutor-profiles.unlock', $account->account_id) }}"
+                            data-confirm-label="Mở khóa">Mở khóa</button>
+                    @endif
+                    <button type="button" class="btn btn-danger"
+                        data-confirm data-confirm-tone="danger"
+                        data-confirm-title="Đình chỉ vĩnh viễn"
+                        data-confirm-message="Tài khoản {{ $account->full_name }} sẽ bị đình chỉ vĩnh viễn và không thể khôi phục."
+                        data-confirm-action="{{ route('admin.tutor-profiles.suspend', $account->account_id) }}"
+                        data-confirm-label="Đình chỉ"
+                        data-confirm-reason="Lý do đình chỉ">Đình chỉ vĩnh viễn</button>
+                </div>
+            </div>
+        </section>
+    @endif
+
     <section class="card">
         <header class="card-header"><h2 class="card-title">Lịch sử xử lý</h2></header>
         <ul class="divide-y">
@@ -115,6 +154,33 @@
         </ul>
     </section>
 </div>
+
+@if ($account->status === 'active')
+    <dialog id="lock-modal" class="modal">
+        <form method="POST" action="{{ route('admin.tutor-profiles.lock', $account->account_id) }}">
+            @csrf
+            <div class="modal-header">
+                <h2 class="modal-title">Tạm khóa tài khoản</h2>
+                <p class="modal-desc">Gia sư không đăng nhập được trong thời gian khóa và sẽ nhận thông báo kèm lý do.</p>
+            </div>
+            <div class="modal-body space-y-4">
+                <div class="field">
+                    <label for="lock-days" class="field-label">Thời hạn khóa (ngày) <span class="req">*</span></label>
+                    <input id="lock-days" type="number" name="days" class="input" min="{{ \App\Services\AccountService::MIN_LOCK_DAYS }}" max="{{ \App\Services\AccountService::MAX_LOCK_DAYS }}" value="{{ \App\Services\AccountService::MIN_LOCK_DAYS }}" required>
+                    <p class="field-hint">Từ {{ \App\Services\AccountService::MIN_LOCK_DAYS }} đến {{ \App\Services\AccountService::MAX_LOCK_DAYS }} ngày.</p>
+                </div>
+                <div class="field">
+                    <label for="lock-reason" class="field-label">Lý do <span class="req">*</span></label>
+                    <textarea id="lock-reason" name="reason" class="input" rows="3" required minlength="5" maxlength="500"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-modal-close>Hủy</button>
+                <button type="submit" class="btn btn-primary">Tạm khóa</button>
+            </div>
+        </form>
+    </dialog>
+@endif
 
 @if ($canReview)
     <dialog id="supplement-modal" class="modal">

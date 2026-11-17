@@ -2,7 +2,12 @@
 @extends('layouts.base')
 
 @section('body')
-@php $c = config('site.contact'); @endphp
+@php
+    $c = config('site.contact');
+    $isTutor = auth()->check() && auth()->user()->role?->role_name === 'Gia sư';
+    // Gia sư dùng trang hồ sơ riêng; các vai trò khác giữ trang /profile của Khang
+    $profileUrl = $isTutor ? route('tutor.profile.edit') : route('profile.edit');
+@endphp
 <div class="flex min-h-dvh flex-col">
 
     <header class="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
@@ -34,7 +39,12 @@
                     </summary>
 
                     <div class="absolute right-0 z-50 mt-2 w-56 rounded-xl border bg-card p-2 shadow-lg">
-                        <a href="{{ route('profile.edit') }}"
+                        <a href="{{ route('dashboard') }}"
+                        class="block rounded-lg px-3 py-2 text-sm hover:bg-muted">
+                            Tổng quan
+                        </a>
+
+                        <a href="{{ $profileUrl }}"
                         class="block rounded-lg px-3 py-2 text-sm hover:bg-muted">
                             <x-icon name="user" class="mr-2 inline size-4" />
                             Thông tin cá nhân
@@ -45,7 +55,7 @@
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit"
-                                    class="block w-full rounded-lg px-3 py-2 text-left text-sm text-destructive hover:bg-muted">
+                                    class="block w-full rounded-lg px-3 py-2 text-left text-sm text-danger hover:bg-muted">
                                 <x-icon name="log-out" class="mr-2 inline size-4" />
                                 Đăng xuất
                             </button>
@@ -53,10 +63,10 @@
                     </div>
                 </details>
             @else
-                <a href="{{ route('login') }}"
-                class="btn btn-outline hidden lg:inline-flex">
-                    Đăng nhập
-                </a>
+                <div class="hidden items-center gap-2 lg:flex">
+                    <a href="{{ route('login') }}" class="btn btn-outline">Đăng nhập</a>
+                    <a href="{{ route('tutor.register') }}" class="btn btn-primary">Đăng ký làm gia sư</a>
+                </div>
             @endauth
 
             <button type="button" class="btn btn-ghost btn-icon lg:hidden" data-toggle="#mobile-nav"
@@ -88,7 +98,12 @@
                             </summary>
 
                             <div class="mt-2 rounded-lg border bg-card p-2">
-                                <a href="{{ route('profile.edit') }}"
+                                <a href="{{ route('dashboard') }}"
+                                class="block rounded-lg px-3 py-2.5 text-sm hover:bg-muted">
+                                    Tổng quan
+                                </a>
+
+                                <a href="{{ $profileUrl }}"
                                 class="block rounded-lg px-3 py-2.5 text-sm hover:bg-muted">
                                     <x-icon name="user" class="mr-2 inline size-4" />
                                     Thông tin cá nhân
@@ -99,7 +114,7 @@
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit"
-                                            class="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-destructive hover:bg-muted">
+                                            class="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-danger hover:bg-muted">
                                         <x-icon name="log-out" class="mr-2 inline size-4" />
                                         Đăng xuất
                                     </button>
@@ -107,9 +122,10 @@
                             </div>
                         </details>
                     @else
-                        <a href="{{ route('login') }}" class="btn btn-outline w-full">
-                            Đăng nhập
-                        </a>
+                        <div class="flex flex-col gap-2">
+                            <a href="{{ route('login') }}" class="btn btn-outline w-full">Đăng nhập</a>
+                            <a href="{{ route('tutor.register') }}" class="btn btn-primary w-full">Đăng ký làm gia sư</a>
+                        </div>
                     @endauth
                 </li>
             </ul>
@@ -129,8 +145,10 @@
                 <ul class="mt-3 flex flex-col gap-2 text-sm text-muted-foreground">
                     <li><a class="hover:text-primary" href="{{ url('/tim-gia-su') }}">Đăng ký tìm gia sư</a></li>
                     <li><a class="hover:text-primary" href="{{ url('/bai-viet') }}">Bài viết</a></li>
-                    <li><a class="hover:text-primary" href="{{ url('/gia-su/dang-ky') }}">Đăng ký làm gia sư</a></li>
-                    <li><a class="hover:text-primary" href="{{ url('/admin/dang-nhap') }}">Đăng nhập nhân sự</a></li>
+                    @guest
+                        <li><a class="hover:text-primary" href="{{ route('tutor.register') }}">Đăng ký làm gia sư</a></li>
+                        <li><a class="hover:text-primary" href="{{ route('login') }}">Đăng nhập</a></li>
+                    @endguest
                 </ul>
             </div>
             <div>
