@@ -157,7 +157,7 @@
                     <div>
                         <p class="text-xs font-medium text-muted-foreground">Bằng chứng</p>
                         @if ($refund->evidence_file)
-                            <a href="{{ asset('storage/' . $refund->evidence_file) }}" target="_blank" rel="noopener" class="mt-1 inline-flex font-medium text-primary hover:underline">{{ basename($refund->evidence_file) }}</a>
+                            <a href="{{ route('admin.refunds.evidence', $id) }}" target="_blank" rel="noopener" class="mt-1 inline-flex font-medium text-primary hover:underline">{{ basename($refund->evidence_file) }}</a>
                         @else
                             <p class="mt-1 text-muted-foreground">Không đính kèm</p>
                         @endif

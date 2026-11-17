@@ -116,6 +116,15 @@ class RefundController extends Controller
             'Đã gửi lại yêu cầu hoàn tiền đến cổng thanh toán.');
     }
 
+    /** Xem file bằng chứng (lưu riêng tư, không công khai) */
+    public function evidence(int $id): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $file = $this->find($id)->evidence_file;
+        abort_unless($file && \Illuminate\Support\Facades\Storage::disk('local')->exists($file), 404);
+
+        return \Illuminate\Support\Facades\Storage::disk('local')->response($file);
+    }
+
     private function find(int $id): RefundRequest
     {
         return RefundRequest::with(['payment.tutorClass', 'payment.account.person', 'requester.person', 'decider.person', 'transactions'])

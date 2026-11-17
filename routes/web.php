@@ -98,6 +98,10 @@ Route::prefix('admin/hoan-phi')
             ->whereNumber('id')
             ->name('show');
 
+        Route::get('/{id}/bang-chung', 'evidence')
+            ->whereNumber('id')
+            ->name('evidence');
+
         Route::post('/{id}/duyet', 'approve')
             ->whereNumber('id')
             ->middleware('can:refund.approve')
@@ -163,6 +167,7 @@ Route::get('/admin/lop-hoc', function () {
     return view('admin.tutor_classes.index');
 })->name('admin.tutor-classes.index');
 require __DIR__.'/tutor-accounts.php';
+require __DIR__ . '/teaching.php'; // Giảng dạy và hoàn phí cho Gia sư, NV QLKH, Giám đốc (Trang)
 
 
 // Đăng nhập xong vào đây: mỗi vai trò thêm 1 nhánh if chuyển tới trang của mình,

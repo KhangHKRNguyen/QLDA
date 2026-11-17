@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Notification;
 use App\Models\RefundRequest;
 use App\Models\RefundTransaction;
+use App\Models\TutorClass;
 use DomainException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +24,67 @@ use Illuminate\Support\Facades\DB;
 class RefundService
 {
     public function __construct(private RefundGateway $gateway) {}
+
+    /**
+     * Gửi yêu cầu hoàn phí (FR-HP-01 → FR-HP-04).
+     * $source: 'tutor' (Gia sư — chỉ lý do được phép) | 'staff' (NV QLKH — cả 6 lý do).
+     */
+    public function submit(TutorClass $class, string $reasonCode, string $content, ?string $evidenceFile, string $source, int $actorId): RefundRequest
+    {
+        if ($blocker = TeachingService::refundBlocker($class)) {
+            throw new DomainException($blocker);
+        }
+
+        $reason = RefundRequest::REASONS[$reasonCode] ?? throw new DomainException('Lý do hoàn phí không hợp lệ.');
+
+        if ($source === 'tutor' && ! $reason[2]) {
+            throw new DomainException('Gia sư không được chọn lý do này. Vui lòng liên hệ Trung tâm.');
+        }
+
+        $payment = TeachingService::paidTransaction($class);
+
+        return DB::transaction(function () use ($class, $reasonCode, $reason, $content, $evidenceFile, $source, $actorId, $payment) {
+            $request = RefundRequest::create([
+                'reason'                 => $content,
+                'reason_code'            => $reasonCode,
+                'source_type'            => $source,
+                'expected_refund_amount' => round((float) $payment->amount * $reason[1]),
+                'status'                 => 'pending',
+                'received_at'            => now(),
+                'evidence_file'          => $evidenceFile,
+                'payment_transaction_id' => $payment->payment_transaction_id,
+                'requested_by'           => $actorId,
+            ]);
+            $request->setRelation('payment', $payment);
+
+            $class->update(['status' => 'refund_processing']);
+
+            $this->log($request, 'Gửi yêu cầu hoàn phí – dự kiến ' . self::money($request->expected_refund_amount), $actorId);
+            $this->notifyMany($this->managers(), "Có yêu cầu hoàn phí mới #{$request->refund_request_id} (lớp {$class->subject} – {$class->grade_level}), hạn xử lý "
+                . $request->deadline()->format('d/m/Y') . '.');
+
+            if ($source === 'staff' && $class->account_id) {
+                $this->notifyMany(Account::whereKey($class->account_id)->get(),
+                    "Trung tâm đã tạo yêu cầu hoàn phí #{$request->refund_request_id} cho lớp {$class->subject} – {$class->grade_level} theo phản ánh của phụ huynh.");
+            }
+
+            return $request;
+        });
+    }
+
+    /** Giám đốc yêu cầu Quản lý tiếp tục xử lý yêu cầu quá hạn (luồng phụ 1) */
+    public function escalate(RefundRequest $request, ?string $note, int $directorId): void
+    {
+        if ($request->status !== 'overdue') {
+            throw new DomainException('Chỉ nhắc xử lý các yêu cầu đang quá hạn.');
+        }
+
+        DB::transaction(function () use ($request, $note, $directorId) {
+            $this->log($request, 'Giám đốc yêu cầu Quản lý tiếp tục xử lý' . ($note ? ": {$note}" : ''), $directorId);
+            $this->notifyMany($this->managers(), "Giám đốc yêu cầu xử lý ngay yêu cầu hoàn phí #{$request->refund_request_id} (đã quá hạn)."
+                . ($note ? " Ghi chú: {$note}" : ''));
+        });
+    }
 
     /** Duyệt: giữ mức dự kiến ($amount = null) hoặc điều chỉnh mức hoàn chính thức (kèm lý do) */
     public function approve(RefundRequest $request, ?float $amount, ?string $note, string $classOutcome, int $actorId): void

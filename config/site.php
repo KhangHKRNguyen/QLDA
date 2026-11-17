@@ -28,7 +28,10 @@ return [
             ['label' => 'Tài khoản gia sư',   'path' => '/admin/gia-su',    'roles' => ['Nhân viên Quản lý Gia sư']],
             ['label' => 'Yêu cầu khách hàng', 'path' => '/admin/yeu-cau',   'roles' => ['Nhân viên Quản lý khách hàng']],
             ['label' => 'Lớp học',            'path' => '/admin/lop-hoc',   'roles' => ['Nhân viên Quản lý khách hàng', 'Quản lý']],
+            ['label' => 'Lớp đang dạy',       'path' => '/admin/giang-day', 'roles' => ['Nhân viên Quản lý khách hàng']],
+            ['label' => 'Phiếu hoàn phí',     'path' => '/admin/giang-day/hoan-phi', 'roles' => ['Nhân viên Quản lý khách hàng']],
             ['label' => 'Yêu cầu hoàn phí',   'path' => '/admin/hoan-phi',  'roles' => ['Quản lý']], // xử lý hoàn phí: chỉ Quản lý (quyền refund.view)
+            ['label' => 'Hoàn phí quá hạn',   'path' => '/admin/hoan-phi-qua-han', 'roles' => ['Giám đốc']],
             ['label' => 'Bài viết',           'path' => '/admin/bai-viet',  'roles' => ['Nhân viên Marketing']],
             ['label' => 'Báo cáo',            'path' => '/admin/bao-cao',   'roles' => ['Giám đốc']],
             ['label' => 'Thông báo',          'path' => '/admin/gia-su/thong-bao', 'roles' => ['Nhân viên Quản lý Gia sư']],
