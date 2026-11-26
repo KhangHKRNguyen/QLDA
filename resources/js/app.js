@@ -66,7 +66,7 @@ function openConfirm(btn) {
     $('#confirm-title').textContent = d.confirmTitle || 'Xác nhận';
     $('#confirm-message').textContent = d.confirmMessage || '';
 
-    form.action = d.confirmAction || '#';
+    form.action = d.confirmAction || btn.closest('form')?.getAttribute('action') || '#';
     $('input[name="_method"]', form).value =
         (d.confirmMethod || 'POST').toUpperCase();
 

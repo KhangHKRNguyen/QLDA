@@ -49,3 +49,5 @@ Route::middleware(['auth', EnsureRole::class . ':Giám đốc'])
         Route::get('/', 'index')->name('index');
         Route::post('/{id}/nhac-xu-ly', 'remind')->whereNumber('id')->name('remind');
     });
+
+require __DIR__ . '/tutor-claim-classes.php';

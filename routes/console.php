@@ -31,7 +31,7 @@ Artisan::command('refunds:sync', function (RefundService $service) {
 
 Schedule::command('refunds:mark-overdue')->hourly();
 Schedule::command('refunds:sync')->everyFiveMinutes();
-
+Schedule::command('tutor-classes:release-expired-reservations')->everyMinute();
 
 // Mở khóa lớp học gia sư định kỳ
 Schedule::call(function () {

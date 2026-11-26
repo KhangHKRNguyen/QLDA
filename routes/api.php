@@ -19,3 +19,5 @@ Route::put('/lop-hoc/{id}', [TutorClassController::class, 'update']);
 
 // --- API DÀNH RIÊNG CHO GIA SƯ ---
 Route::post('/lop-hoc/{id}/nhan-lop', [TutorClassController::class, 'assignClass']);
+
+require __DIR__ . '/tutor-class-payment-webhooks.php';
