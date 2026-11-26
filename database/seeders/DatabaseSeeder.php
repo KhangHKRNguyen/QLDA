@@ -13,6 +13,10 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             RolePermissionSeeder::class,
             AccountSeeder::class,
+            DemoAccountSeeder::class,
+            TeachingDemoSeeder::class,
+            RefundDemoSeeder::class,
+            TutorClaimDemoSeeder::class
         ]);
     }
 }

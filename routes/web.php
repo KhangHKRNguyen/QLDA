@@ -181,12 +181,15 @@ Route::get('/dashboard', function () {
     }
 
     if ($role === 'Gia sư') {
-    return redirect()->route('tutor.dashboard');
-}
-if ($role === 'Nhân viên Quản lý Gia sư') {
-    return redirect()->route('admin.tutor-profiles.dashboard');
-}
+        return redirect()->route('tutor.dashboard');
+    }
+    if ($role === 'Nhân viên Quản lý Gia sư') {
+        return redirect()->route('admin.tutor-profiles.dashboard');
+    }
 
+    if ($role === 'Nhân viên Marketing') {
+        return redirect()->route('staff.articles.index');
+    }
 
     return view('dashboard');
 })->middleware('auth')->name('dashboard');
@@ -198,22 +201,5 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])
         ->name('profile.update');
 });
-
-
-Route::get('/dashboard', function () {
-
-    // Lấy vai trò của tài khoản đang đăng nhập
-    $roleName = auth()->user()->role?->role_name;
-
-    // Nếu là nhân viên Marketing
-    if ($roleName === 'Nhân viên Marketing') {
-        return redirect()->route('staff.articles.index');
-    }
-
-    // Các vai trò khác vẫn hiển thị Dashboard trắng
-    return view('dashboard');
-
-})->middleware('auth')->name('dashboard');
-
 
 require __DIR__ . '/auth.php';
