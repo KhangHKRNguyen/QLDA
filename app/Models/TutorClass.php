@@ -9,9 +9,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TutorClass extends Model
 {
+    public $timestamps = false;
+
     public const STATUS_OPEN = 'pending';
+    public const STATUS_HIDDEN = 'hidden';
     public const STATUS_RESERVED = 'processing';
     public const STATUS_TEACHING = 'teaching';
+    public const STATUS_CANCELED = 'canceled';
 
     protected $table = 'tutor_classes';
     protected $primaryKey = 'class_id';
@@ -53,6 +57,12 @@ class TutorClass extends Model
     public function scopeOpenForClaim(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_OPEN);
+    }
+
+    /** Chỉ cho phép sửa, ẩn/hiện hoặc hủy khi lớp chưa có gia sư giữ chỗ hoặc nhận dạy. */
+    public function canEditOrDelete(): bool
+    {
+        return in_array($this->status, [self::STATUS_OPEN, self::STATUS_HIDDEN], true);
     }
 
     /** True only while a live five-minute reservation exists. */

@@ -9,135 +9,149 @@ use Illuminate\Support\Facades\DB;
 
 class TutorClassController extends Controller
 {
-    // Cài đặt Phân quyền
-    public function __construct()
-    {
-        $this->middleware('auth:api');
-        // Trừ hàm Xem và hàm Gia sư nhận lớp, còn lại (Thêm, Sửa, Xóa) chỉ có QLKH được làm
-        $this->middleware('role:nhan_vien_qlkh')->except(['index', 'show', 'assignClass']);
-        
-        // Cấp quyền riêng cho Gia sư bấm nhận lớp
-        $this->middleware('role:gia_su')->only(['assignClass']);
-    }
-
-    // 1. Xem danh sách Lớp học (Public cho Gia sư / Quản lý)
     public function index(Request $request)
     {
-        $query = TutorClass::query();
+        $query = TutorClass::with('tutorRequest');
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        $classes = $query->orderBy('created_at', 'desc')->paginate(10);
-        return response()->json($classes);
+        if ($request->filled('keyword')) {
+            $keyword = trim($request->keyword);
+            $query->where(function ($q) use ($keyword) {
+                $q->where('subject', 'like', "%{$keyword}%")
+                  ->orWhere('grade_level', 'like', "%{$keyword}%")
+                  ->orWhere('class_id', $keyword);
+            });
+        }
+
+        $tutorClasses = $query->orderByDesc('class_id')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.tutor_classes.index', compact('tutorClasses'));
     }
 
-    // 2. Xem chi tiết 1 Lớp học
     public function show($id)
     {
-        $tutorClass = TutorClass::findOrFail($id);
-        return response()->json($tutorClass);
+        $tutorClass = TutorClass::with('tutorRequest')->findOrFail($id);
+
+        return view('admin.tutor_classes.index', [
+            'tutorClasses'  => TutorClass::with('tutorRequest')->orderByDesc('class_id')->paginate(10),
+            'selectedClass' => $tutorClass,
+        ]);
     }
 
-    // 3. Tạo Lớp học kế thừa từ Yêu cầu (QLKH thực hiện)
     public function storeFromRequest(Request $request, $requestId)
     {
-        $tutorReq = TutorRequest::findOrFail($requestId);
-        
-        if ($tutorReq->status !== 'confirmed') {
-            return response()->json(['message' => 'Chỉ tạo lớp từ yêu cầu đã xác nhận.'], 403);
+        $tutorRequest = TutorRequest::with('tutorClass')->findOrFail($requestId);
+
+        if ($tutorRequest->status !== 'confirmed') {
+            return redirect()
+                ->back()
+                ->with('error', 'Chỉ được tạo lớp học từ yêu cầu ở trạng thái Đã xác nhận.');
+        }
+
+        if ($tutorRequest->tutorClass) {
+            return redirect()
+                ->back()
+                ->with('error', 'Yêu cầu này đã được tạo lớp học trước đó.');
         }
 
         $validated = $request->validate([
             'fee_per_session' => 'required|numeric|min:0',
             'enrollment_fee'  => 'required|numeric|min:0',
-            'location'        => 'nullable|string'
+            'location'        => 'nullable|string|max:500',
         ]);
 
-        $tutorClass = DB::transaction(function () use ($tutorReq, $validated) {
-            return TutorClass::create([
-                'tutor_request_id'  => $tutorReq->tutor_request_id,
-                'person_id'         => $tutorReq->person_id,
-                'account_id'        => auth()->id(), // ID của nhân viên tạo lớp
-                'subject'           => $tutorReq->subject,
-                'grade_level'       => $tutorReq->grade_level,
-                'learning_format'   => $tutorReq->learning_format,
-                'schedule'          => $tutorReq->schedule,
-                'sessions_per_week' => $tutorReq->sessions_per_week,
+        DB::transaction(function () use ($tutorRequest, $validated) {
+            TutorClass::create([
+                'tutor_request_id'  => $tutorRequest->tutor_request_id,
+                'person_id'         => $tutorRequest->person_id,
+                'account_id'        => auth()->id(),
+                'subject'           => $tutorRequest->subject,
+                'grade_level'       => $tutorRequest->grade_level,
+                'learning_format'   => $tutorRequest->learning_format,
+                'schedule'          => $tutorRequest->schedule,
+                'sessions_per_week' => $tutorRequest->sessions_per_week,
                 'fee_per_session'   => $validated['fee_per_session'],
                 'enrollment_fee'    => $validated['enrollment_fee'],
-                'location'          => $validated['location'],
-                'status'            => 'pending' // pending tương đương trạng thái 'Đang tuyển'
+                'location'          => $validated['location'] ?? null,
+                'status'            => 'pending', // Đang tuyển gia sư
             ]);
         });
 
-        return response()->json(['message' => 'Tạo lớp thành công', 'data' => $tutorClass], 201);
+        return redirect()
+            ->route('admin.tutor-classes.index')
+            ->with('success', 'Tạo lớp học mới thành công và đã đưa lên danh sách tuyển gia sư.');
     }
 
-    // 4. Cập nhật thông tin Lớp học (Chỉ khi chưa có Gia sư nhận)
     public function update(Request $request, $id)
     {
         $tutorClass = TutorClass::findOrFail($id);
 
-        if (!$tutorClass->canEditOrDelete()) {
-            return response()->json(['message' => 'Không thể chỉnh sửa vì lớp đã có giao dịch.'], 403);
+        if (!$this->canModify($tutorClass)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Lớp học đã có gia sư nhận hoặc đang xử lý, không thể chỉnh sửa.');
         }
 
         $validated = $request->validate([
-            'subject'           => 'sometimes|required|string|max:100',
+            'subject'           => 'required|string|max:100',
+            'grade_level'       => 'required|string|max:50',
+            'learning_format'   => 'required|string|max:50',
             'schedule'          => 'nullable|string',
-            'sessions_per_week' => 'sometimes|required|integer|min:1',
-            'fee_per_session'   => 'sometimes|required|numeric|min:0',
-            'enrollment_fee'    => 'sometimes|required|numeric|min:0',
-            'location'          => 'nullable|string',
-            'status'            => 'sometimes|required|in:pending,hidden,canceled',
+            'sessions_per_week' => 'required|integer|min:1|max:14',
+            'fee_per_session'   => 'required|numeric|min:0',
+            'enrollment_fee'    => 'required|numeric|min:0',
+            'location'          => 'nullable|string|max:500',
         ]);
 
         $tutorClass->update($validated);
 
-        return response()->json([
-            'message' => 'Cập nhật thông tin lớp thành công',
-            'data' => $tutorClass
-        ]);
+        return redirect()
+            ->route('admin.tutor-classes.index')
+            ->with('success', 'Cập nhật thông tin lớp học thành công.');
     }
 
-    // 5. Gia sư thao tác "Nhận lớp" (Pessimistic Locking - Chống giật lớp)
-    public function assignClass(Request $request, $classId)
+    public function toggleVisibility($id)
     {
-        $tutorId = $request->user()->account_id;
+        $tutorClass = TutorClass::findOrFail($id);
 
-        try {
-            DB::beginTransaction();
-
-            $tutorClass = TutorClass::where('class_id', $classId)->lockForUpdate()->firstOrFail();
-
-            if ($tutorClass->status !== 'pending') {
-                DB::rollBack();
-                return response()->json(['message' => 'Lớp này không còn khả dụng.'], 400);
-            }
-
-            if ($tutorClass->isLocked()) {
-                DB::rollBack();
-                return response()->json(['message' => 'Lớp đang được gia sư khác giữ chỗ chờ thanh toán.'], 409);
-            }
-
-            $tutorClass->update([
-                'status'     => 'processing',
-                'account_id' => $tutorId, // Ghi danh tạm thời gia sư
-                'locked_at'  => now() // Bắt đầu tính giờ đếm ngược 5 phút
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Giữ chỗ thành công. Vui lòng thanh toán trong 5 phút.',
-                'locked_at' => $tutorClass->locked_at,
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Lỗi hệ thống, vui lòng thử lại sau.'], 500);
+        if (!$this->canModify($tutorClass)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Không thể ẩn/hiện lớp khi đã có gia sư nhận.');
         }
+
+        $newStatus = $tutorClass->status === 'hidden' ? 'pending' : 'hidden';
+        $tutorClass->update(['status' => $newStatus]);
+
+        return redirect()
+            ->route('admin.tutor-classes.index')
+            ->with('success', $newStatus === 'hidden' ? 'Đã ẩn lớp học khỏi danh sách tuyển.' : 'Đã hiển thị lại lớp học.');
+    }
+
+    public function destroy($id)
+    {
+        $tutorClass = TutorClass::findOrFail($id);
+
+        if (!$this->canModify($tutorClass)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Không thể xóa lớp đã có gia sư nhận.');
+        }
+
+        $tutorClass->update(['status' => 'canceled']);
+
+        return redirect()
+            ->route('admin.tutor-classes.index')
+            ->with('success', 'Đã hủy lớp học thành công.');
+    }
+
+    private function canModify(TutorClass $tutorClass): bool
+    {
+        return in_array($tutorClass->status, ['pending', 'hidden'], true);
     }
 }

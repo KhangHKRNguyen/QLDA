@@ -166,6 +166,7 @@ Route::get('/admin/yeu-cau', function () {
 Route::get('/admin/lop-hoc', function () {
     return view('admin.tutor_classes.index');
 })->name('admin.tutor-classes.index');
+require __DIR__ . '/qlkh.php';
 require __DIR__.'/tutor-accounts.php';
 require __DIR__ . '/teaching.php'; // Giảng dạy và hoàn phí cho Gia sư, NV QLKH, Giám đốc (Trang)
 
@@ -189,6 +190,10 @@ Route::get('/dashboard', function () {
 
     if ($role === 'Nhân viên Marketing') {
         return redirect()->route('staff.articles.index');
+    }
+
+    if ($role === 'Nhân viên Quản lý Khách hàng') {
+        return redirect()->route('admin.tutor-requests.index');
     }
 
     return view('dashboard');
